@@ -1,0 +1,47 @@
+FROM microsoft/dotnet:2.1-aspnetcore-runtime AS base
+
+# RUN useradd -m buildadmin && echo "buildadmin:buildadmin" | chpasswd
+# RUN adduser buildadmin sudo
+# USER buildadmin
+
+WORKDIR /app
+# ENV ASPNETCORE_URLS=http://*:8080
+# EXPOSE 8080
+
+FROM microsoft/dotnet:2.1-sdk AS build
+WORKDIR /src
+COPY ["Nysc.API.csproj", "Nysc.API/"]
+RUN dotnet restore "Nysc.API/Nysc.API.csproj"
+COPY . .
+
+RUN dotnet build "Nysc.API.csproj" -c Release -o /app
+FROM build AS publish
+RUN dotnet publish "Nysc.API.csproj" -c Release -o /app
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app .
+# RUN chown buildadmin:buildadmin /app /app/*
+RUN echo "ASPNETCORE_URLS=http://*:$PORT\nDOTNET_RUNNING_IN_CONTAINER=true\necho $(whoami)\ndotnet /app/Nysc.API.dll" > /bin/setup_heroku_env.sh
+# RUN chown buildadmin:buildadmin /bin/setup_heroku_env.sh
+# RUN chmod 755 /bin/setup_heroku_env.sh
+
+# run as www-data(33), readonly
+RUN chmod +x /bin/setup_heroku_env.sh
+RUN chmod +x /app/Nysc.API.dll
+
+
+
+# RUN chown -R 33:33 ./
+# RUN chmod -R 0500 ./
+# RUN chmod -R 0700 *.dll # if the dll's are not writeable, it won't start
+# USER 33
+
+RUN ls
+ENTRYPOINT ["dotnet", "Nysc.API.dll"]
+CMD /bin/bash -c "source /bin/setup_heroku_env.sh"
+
+# CMD sudo su -s /bin/bash - buildadmin -c "su buildadmin && source /bin/setup_heroku_env.sh"
+
+# && dotnet Nysc.API.dll"
+# docker exec -u root -t -i 67f1f984d575 /bin/bash
