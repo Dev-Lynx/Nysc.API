@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Nysc.API.Data;
@@ -9,14 +10,16 @@ using Nysc.API.Data;
 namespace Nysc.API.Migrations
 {
     [DbContext(typeof(UserDataContext))]
-    [Migration("20190420221804_initial")]
-    partial class initial
+    [Migration("20190521130837_UserActivity")]
+    partial class UserActivity
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "2.1.8-servicing-32085");
+                .HasAnnotation("ProductVersion", "2.1.8-servicing-32085")
+                .HasAnnotation("Relational:MaxIdentifierLength", 128)
+                .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
@@ -36,7 +39,8 @@ namespace Nysc.API.Migrations
 
                     b.HasIndex("NormalizedName")
                         .IsUnique()
-                        .HasName("RoleNameIndex");
+                        .HasName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles");
                 });
@@ -44,7 +48,8 @@ namespace Nysc.API.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("ClaimType");
 
@@ -63,7 +68,8 @@ namespace Nysc.API.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("ClaimType");
 
@@ -125,9 +131,30 @@ namespace Nysc.API.Migrations
                     b.ToTable("AspNetUserTokens");
                 });
 
-            modelBuilder.Entity("Nysc.API.Models.Entities.UserResource", b =>
+            modelBuilder.Entity("Nysc.API.Models.Entities.OneTimePassword", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Code");
+
+                    b.Property<DateTime>("Created");
+
+                    b.Property<string>("UserId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
+
+                    b.ToTable("OneTimePasswords");
+                });
+
+            modelBuilder.Entity("Nysc.API.Models.Entities.ResourceBase", b =>
+                {
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd();
 
                     b.Property<bool>("Active");
@@ -143,7 +170,25 @@ namespace Nysc.API.Migrations
 
                     b.ToTable("Resources");
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("UserResource");
+                    b.HasDiscriminator<string>("Discriminator").HasValue("ResourceBase");
+                });
+
+            modelBuilder.Entity("Nysc.API.Models.Entities.UserActivityBase", b =>
+                {
+                    b.Property<string>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<int>("ActivityType");
+
+                    b.Property<DateTime>("Created");
+
+                    b.Property<string>("UserId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Activities");
                 });
 
             modelBuilder.Entity("Nysc.API.Models.User", b =>
@@ -215,19 +260,19 @@ namespace Nysc.API.Migrations
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
-                        .HasName("UserNameIndex");
+                        .HasName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers");
                 });
 
             modelBuilder.Entity("Nysc.API.Models.Entities.Photo", b =>
                 {
-                    b.HasBaseType("Nysc.API.Models.Entities.UserResource");
+                    b.HasBaseType("Nysc.API.Models.Entities.ResourceBase");
 
                     b.Property<string>("PublicID");
 
-                    b.Property<string>("Type")
-                        .IsRequired();
+                    b.Property<int>("Type");
 
                     b.Property<string>("UserId");
 
@@ -281,6 +326,20 @@ namespace Nysc.API.Migrations
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Nysc.API.Models.Entities.OneTimePassword", b =>
+                {
+                    b.HasOne("Nysc.API.Models.User", "User")
+                        .WithOne("OneTimePassword")
+                        .HasForeignKey("Nysc.API.Models.Entities.OneTimePassword", "UserId");
+                });
+
+            modelBuilder.Entity("Nysc.API.Models.Entities.UserActivityBase", b =>
+                {
+                    b.HasOne("Nysc.API.Models.User", "User")
+                        .WithMany("Activities")
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("Nysc.API.Models.Entities.Photo", b =>

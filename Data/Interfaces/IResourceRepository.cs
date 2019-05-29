@@ -9,7 +9,7 @@ namespace Nysc.API.Data.Interfaces
     public interface IResourceRepository
     {
         #region Methods
-        Task<Photo> GetPhoto(int id);
+        Task<Photo> GetPhoto(string id);
         #endregion
     }
 }

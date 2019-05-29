@@ -6,12 +6,10 @@ using System.Threading.Tasks;
 
 namespace Nysc.API.ViewModels
 {
-    public class PhotoViewModel
+    public class SimpleUserActivity
     {
-        public PhotoType Type { get; set; }
-        public string Url { get; set; }
+        public Activity ActivityType { get; set; }
         public string Description { get; set; }
-        public DateTime DateAdded { get; set; }
-        public string UserIdentity { get; set; }
+        public DateTime Created { get; set; }
     }
 }

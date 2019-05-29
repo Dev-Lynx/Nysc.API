@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Nysc.API.Models;
 using Nysc.API.Models.Entities;
+using Nysc.API.Models.UserActivities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +17,8 @@ namespace Nysc.API.Data
 
         #region DbSets
         public DbSet<OneTimePassword> OneTimePasswords { get; set; }
-        public DbSet<UserResource> Resources { get; set; }
+        public DbSet<ResourceBase> Resources { get; set; }
+        public DbSet<UserActivityBase> Activities { get; set; }
         #endregion
 
         #endregion
@@ -32,11 +34,18 @@ namespace Nysc.API.Data
         {
             base.OnModelCreating(builder);
 
-            builder.Entity<Photo>().Property(u => u.Type)
+            /*
+            builder.Entity<Photo>()
+                .Property(p => p.Type)
                 .HasConversion(new EnumToStringConverter<PhotoType>());
+            */
+
+            builder.Entity<AccountActivity>().HasBaseType<UserActivityBase>();
+            builder.Entity<CoordinatorActivity>().HasBaseType<UserActivityBase>();
 
             builder.Entity<User>().HasOne(u => u.OneTimePassword).WithOne(p => p.User)
                 .HasForeignKey<OneTimePassword>(p => p.UserId);
+
         }
         #endregion
 

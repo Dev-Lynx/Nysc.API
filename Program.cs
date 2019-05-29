@@ -14,6 +14,8 @@ namespace Nysc.API
     {
         public static void Main(string[] args)
         {
+            if (args != null)
+                Core.StartupArguments = args;
             CreateWebHostBuilder(args).Build().Run();
         }
 

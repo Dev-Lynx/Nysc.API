@@ -7,18 +7,43 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Migrations\20190420221804_initial.cs" />
+    <Compile Remove="Migrations\20190420221804_initial.Designer.cs" />
+    <Compile Remove="Migrations\20190421141731_Counter.cs" />
+    <Compile Remove="Migrations\20190421141731_Counter.Designer.cs" />
+    <Compile Remove="Migrations\20190421172100_AddedOneTimePasswords.cs" />
+    <Compile Remove="Migrations\20190421172100_AddedOneTimePasswords.Designer.cs" />
+    <Compile Remove="Migrations\20190505101739_UpdatedResourceAndPasswordID.cs" />
+    <Compile Remove="Migrations\20190505101739_UpdatedResourceAndPasswordID.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="ApplicationBase\Indexes\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="CloudinaryDotNet" Version="1.7.0" />
+    <PackageReference Include="DotMim.Sync.Sqlite" Version="0.3.0" />
+    <PackageReference Include="DotMim.Sync.SqlServer" Version="0.3.0" />
     <PackageReference Include="libphonenumber-csharp" Version="8.10.7" />
+    <PackageReference Include="Lucene.Net" Version="4.8.0-beta00005" />
+    <PackageReference Include="Lucene.Net.QueryParser" Version="4.8.0-beta00005" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.1.2" PrivateAssets="All" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="2.1.1" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.4.10" />
+    <PackageReference Include="NLog" Version="4.6.3" />
+    <PackageReference Include="NLog.Web.AspNetCore" Version="4.8.1" />
     <PackageReference Include="Otp.NET" Version="1.2.1" />
+    <PackageReference Include="Sieve" Version="2.3.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="NLog">
+      <HintPath>..\NyscIdentify.Desktop\bin\Debug\NLog.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>

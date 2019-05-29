@@ -29,5 +29,16 @@ namespace Nysc.API.Extensions
         {
             return GetEnumDescription((Enum)(object)EnumValue);
         }
+
+        public static string[] GetDescriptions<TEnum>() where TEnum : struct
+        {
+            Array values = Enum.GetValues(typeof(TEnum));
+            string[] descriptions = new string[values.Length];
+
+            for (int i = 0; i < values.Length; i++)
+                descriptions[i] = ((TEnum)values.GetValue(i)).ToDescription();
+
+            return descriptions;
+        }
     }
 }

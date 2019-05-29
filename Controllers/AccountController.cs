@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Nysc.API.Data;
 using Nysc.API.Models.Entities;
+using Nysc.API.Models.UserActivities;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Nysc.API.Controllers
 {
@@ -51,11 +53,14 @@ namespace Nysc.API.Controllers
 
             if (!user.PhoneNumberConfirmed) return new OkObjectResult(Mapper.Map<UserLoginViewModel>(user));
 
-            await UserDataContext.Entry(user).Collection(u => u.Photos).LoadAsync();
+            EntityEntry<User> entry = UserDataContext.Entry(user);
+            
+            await entry.Collection(u => u.Photos).LoadAsync();
+            await entry.Collection(u => u.Activities).LoadAsync();
             return new OkObjectResult(Mapper.Map<UserProfileViewModel>(user));
         }
 
-        [HttpPost("updateUser")]
+        [HttpPost("update")]
         public async Task<IActionResult> UpdateUser(UserProfileViewModel model)
         {
             string id = User.FindFirst("id").Value;
@@ -65,9 +70,24 @@ namespace Nysc.API.Controllers
             if (user.FileNo != model.FileNo) return Unauthorized();
 
             user = Mapper.Map(model, user);
+
+            user.Activities.Add(new AccountActivity() { ActivityType = Models.Entities.Activity.AccountUpdated });
             UserDataContext.Update(user);
             await UserDataContext.SaveChangesAsync();
             return Ok();
+        }
+
+        [HttpPost("changePassword")]
+        public async Task<IActionResult> ChangePassword([FromBody]PasswordChangeViewModel model)
+        {
+            string id = User.FindFirst("id").Value;
+            User user = await UserManager.FindByIdAsync(id);
+
+            IdentityResult result = await UserManager.ChangePasswordAsync(user, 
+                model.CurrentPassword, model.NewPassword);
+
+            if (result.Succeeded) return Ok();
+            return BadRequest();
         }
         #endregion                  
     }

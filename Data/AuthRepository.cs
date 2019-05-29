@@ -47,12 +47,16 @@ namespace Nysc.API.Data
         #region IAuthRepository Implemenation
         public async Task<string> Login(UserLoginViewModel model)
         {
-            var user = await UserManager.Users.FirstOrDefaultAsync(u => u.FileNo == model.FileNo);
+            var user = await UserManager.Users.FirstOrDefaultAsync(u => u.UserName == model.Username);
             if (user == null) return null;
 
             if (!(await UserManager.CheckPasswordAsync(user, model.Password))) return null;
             return await JwtFactory.GenerateToken(user);
         }
+
+        public async Task<User> GetUser(string username) => await UserManager.FindByNameAsync(username);
+
+        public async Task<bool> UserIsInRole(User user, string role) => await UserManager.IsInRoleAsync(user, role);
 
         public async Task<User> GetUserById(string id) => await UserManager.FindByIdAsync(id);
 

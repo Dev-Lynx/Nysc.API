@@ -42,10 +42,27 @@ namespace Nysc.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(UserLoginViewModel model)
         {
+            User user = await Auth.GetUser(model.Username);
+            if (user == null) return Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(model.Role)) return Forbid();
+            if (!await Auth.UserIsInRole(user, model.Role)) return Forbid();
+
             string token = await Auth.Login(model);
             if (token == null) return Unauthorized();
+
+            // SignIn(User, JwtBearerDefaults.AuthenticationScheme + $" {token}");
             return Ok(new { access_token = token });
         }
+
+        /*
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            // SignOut(JwtBearerDefaults.AuthenticationScheme);
+            return Ok();
+        }
+        */
 
         [Authorize]
         [HttpPost("phone-verification")]

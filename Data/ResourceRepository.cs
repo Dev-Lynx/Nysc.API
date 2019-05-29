@@ -27,12 +27,11 @@ namespace Nysc.API.Data
         #endregion
 
         #region Methods
-        public async Task<Photo> GetPhoto(int id)
+        public async Task<Photo> GetPhoto(string id)
         {
-            var resource = await UserDataContext.Resources.FirstOrDefaultAsync(p => p.Id == id);
+            var resource = await UserDataContext.Resources.OfType<Photo>().FirstOrDefaultAsync(p => p.Id == id);
             if (resource == null) throw new InvalidOperationException("The requested photo was not found. Are you sure it wasn't deleted?");
-            if (!(resource is Photo)) throw new InvalidOperationException("The requested resource is not a photo");
-            return (Photo)resource;
+            return resource;
         }
         #endregion
     }

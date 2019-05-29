@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,7 +20,9 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Nysc.API.Data;
 using Nysc.API.Data.Interfaces;
+using Nysc.API.Extensions;
 using Nysc.API.Models;
+using Sieve.Services;
 
 namespace Nysc.API
 {
@@ -43,10 +46,12 @@ namespace Nysc.API
         #region Methods
         public void ConfigureServices(IServiceCollection services)
         {
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddCors();
             services.AddAutoMapper();
-            services.AddDbContext<UserDataContext>(options => options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
+
+            services.AddDbContext<UserDataContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection").Replace("|DataDirectory|", Core.DATA_DIR)));
 
 
             ConfigureAuthentication(services);
@@ -54,11 +59,13 @@ namespace Nysc.API
             services.AddScoped<IResourceRepository, ResourceRepository>();
             services.AddScoped<ISmsService, SmsService>();
             services.AddScoped<IJwtFactory, JwtFactory>();
+            services.AddScoped<RoleManager<IdentityRole>, RoleManager<IdentityRole>>();
             services.AddScoped<UserManager<User>, UserManager<User>>();
-            services.AddScoped<Core>();
+            services.AddScoped<SieveProcessor>();
+            Core.ConfigureCoreServices(services);
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, Core core)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider serviceProvider, UserManager<User> UserManager)
         {
             if (env.IsDevelopment())
             {
@@ -71,18 +78,30 @@ namespace Nysc.API
 
             // app.UseHttpsRedirection();
             app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            
             app.UseAuthentication();
             app.UseMvc();
 
             app.UseSpaStaticFiles();
             app.UseSpa(spa => { });
-            
 
-            // core.SeedUsers();
+
+            Core.Initialize(serviceProvider).Wait();
         }
 
-        public IServiceCollection ConfigureAuthentication(IServiceCollection services)
+
+        IServiceCollection ConfigureAuthentication(IServiceCollection services)
         {
+            services.AddIdentity<User, IdentityRole>(u =>
+            {
+                u.Password.RequireDigit = false;
+                u.Password.RequireLowercase = false;
+                u.Password.RequireUppercase = false;
+                u.Password.RequireNonAlphanumeric = false;
+                u.Password.RequiredLength = 8;
+                u.User.RequireUniqueEmail = false;
+            }).AddEntityFrameworkStores<UserDataContext>().AddDefaultTokenProviders();
+
             JwtIssuerOptions jwtIssuerOptions = Configuration.GetSection(nameof(JwtIssuerOptions))
                 .Get<JwtIssuerOptions>();
             jwtIssuerOptions.SigningCredentials = new SigningCredentials(SecretKey, SecurityAlgorithms.HmacSha512Signature);
@@ -94,12 +113,12 @@ namespace Nysc.API
                 options.SigningCredentials = jwtIssuerOptions.SigningCredentials;
                 options.Subject = jwtIssuerOptions.Subject;
             });
-            //services.AddScoped<JwtIssuerOptions>();
 
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
             }).AddJwtBearer(configureOptions =>
             {
                 configureOptions.ClaimsIssuer = jwtIssuerOptions.Issuer;
@@ -124,18 +143,10 @@ namespace Nysc.API
 
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("ApiUser", policy => policy.RequireClaim(Core.JWT_CLAIM_ID_ROL, Core.JWT_CLAIM_API_ACCESS));
+                options.AddPolicy("ApiUser", policy => policy.RequireClaim(Core.JWT_CLAIM_ROL, Core.JWT_CLAIM_API_ACCESS));
             });
+            
 
-            services.AddIdentityCore<User>(u =>
-            {
-                u.Password.RequireDigit = false;
-                u.Password.RequireLowercase = false;
-                u.Password.RequireUppercase = false;
-                u.Password.RequireNonAlphanumeric = false;
-                u.Password.RequiredLength = 8;
-                u.User.RequireUniqueEmail = false;
-            }).AddEntityFrameworkStores<UserDataContext>().AddDefaultTokenProviders();
 
             services.AddSpaStaticFiles(configuration =>
             {

@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Nysc.API.Data;
 
 namespace Nysc.API.Migrations
 {
     [DbContext(typeof(UserDataContext))]
-    partial class UserDataContextModelSnapshot : ModelSnapshot
+    [Migration("20190521142458_AddedApproval")]
+    partial class AddedApproval
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -180,9 +182,6 @@ namespace Nysc.API.Migrations
 
                     b.Property<DateTime>("Created");
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired();
-
                     b.Property<string>("UserId");
 
                     b.HasKey("Id");
@@ -190,8 +189,6 @@ namespace Nysc.API.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Activities");
-
-                    b.HasDiscriminator<string>("Discriminator").HasValue("UserActivityBase");
                 });
 
             modelBuilder.Entity("Nysc.API.Models.User", b =>
@@ -209,8 +206,6 @@ namespace Nysc.API.Migrations
                     b.Property<DateTime>("DateOfBirth");
 
                     b.Property<string>("Department");
-
-                    b.Property<string>("DisplayName");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256);
@@ -290,29 +285,6 @@ namespace Nysc.API.Migrations
                     b.HasDiscriminator().HasValue("Photo");
                 });
 
-            modelBuilder.Entity("Nysc.API.Models.Entities.CoordinatorActivity", b =>
-                {
-                    b.HasBaseType("Nysc.API.Models.Entities.UserActivityBase");
-
-                    b.Property<string>("CoordinatorId");
-
-                    b.HasIndex("CoordinatorId");
-
-                    b.ToTable("CoordinatorActivity");
-
-                    b.HasDiscriminator().HasValue("CoordinatorActivity");
-                });
-
-            modelBuilder.Entity("Nysc.API.Models.UserActivities.AccountActivity", b =>
-                {
-                    b.HasBaseType("Nysc.API.Models.Entities.UserActivityBase");
-
-
-                    b.ToTable("AccountActivity");
-
-                    b.HasDiscriminator().HasValue("AccountActivity");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole")
@@ -377,13 +349,6 @@ namespace Nysc.API.Migrations
                     b.HasOne("Nysc.API.Models.User", "User")
                         .WithMany("Photos")
                         .HasForeignKey("UserId");
-                });
-
-            modelBuilder.Entity("Nysc.API.Models.Entities.CoordinatorActivity", b =>
-                {
-                    b.HasOne("Nysc.API.Models.User", "Coordinator")
-                        .WithMany()
-                        .HasForeignKey("CoordinatorId");
                 });
 #pragma warning restore 612, 618
         }

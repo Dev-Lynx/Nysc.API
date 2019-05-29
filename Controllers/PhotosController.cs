@@ -60,7 +60,7 @@ namespace Nysc.API.Controllers
         #region Methods
 
         [HttpGet("{id}", Name = "GetPhoto")]
-        public async Task<IActionResult> GetPhoto(int id)
+        public async Task<IActionResult> GetPhoto(string id)
         {
             string userId = User.FindFirst("id").Value;
             User user = await UserManager.FindByIdAsync(userId);
@@ -119,7 +119,8 @@ namespace Nysc.API.Controllers
             await UserDataContext.Entry(user).Collection(u => u.Photos).LoadAsync();
 
             // Make sure there's only one passport in the photo collection.
-            foreach (var resource in user.Photos.Where(p => p.Type == PhotoType.Passport && p.Active).ToList())
+            foreach (var resource in user.Photos.
+               Where(p => p.Type == PhotoType.Passport && p.Active).ToList())
                 resource.Active = false;
 
             user.Photos.Add(photo);
@@ -169,7 +170,9 @@ namespace Nysc.API.Controllers
             await UserDataContext.Entry(user).Collection(u => u.Photos).LoadAsync();
             
             // Make sure there's only one signature in the photo collection.
-            foreach (var resource in user.Photos.Where(p => p.Type == PhotoType.Signature && p.Active).ToList())
+            foreach (var resource in user.Photos
+                .Where(p => p.Type == PhotoType.Signature && 
+                p.Active).ToList())
                 resource.Active = false;
 
             user.Photos.Add(photo);

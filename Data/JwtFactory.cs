@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Nysc.API.Data.Interfaces;
 using Nysc.API.Models;
 using System;
@@ -17,28 +19,34 @@ namespace Nysc.API.Data
 
         #region Internals
         public JwtIssuerOptions JwtOptions { get; }
+        UserManager<User> UserManager { get; }
+        IAuthRepository Auth { get; }
         #endregion
 
         #endregion
 
         #region Constructors
-        public JwtFactory(IOptions<JwtIssuerOptions> jwtOptions)
+        public JwtFactory(IOptions<JwtIssuerOptions> jwtOptions, UserManager<User> userManager)
         {
             JwtOptions = jwtOptions.Value;
+            UserManager = userManager;
         }
         #endregion
 
         #region Methods
 
         #region IJwtFactory Implementation
-        public Task<string> GenerateToken(User user)
+        public async Task<string> GenerateToken(User user)
         {
-            var identity = new ClaimsIdentity(new GenericIdentity(user.UserName, "Token"), new[]
+            string role = (await UserManager.GetRolesAsync(user)).FirstOrDefault();
+
+            var identity = new ClaimsIdentity(new GenericIdentity(user.Id, "Token"), new[]
             {
-                new Claim(Core.JWT_CLAIM_ID_ID, user.Id),
+                new Claim(Core.JWT_CLAIM_ID, user.Id),
                 new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
-                new Claim(Core.JWT_CLAIM_ID_ROL, Core.JWT_CLAIM_API_ACCESS),
-                new Claim(Core.JWT_CLAIM_ID_VERIFIED, user.PhoneNumberConfirmed.ToString())
+                new Claim(JwtRegisteredClaimNames.Jti, await JwtOptions.JtiGenerator()),
+                new Claim(Core.JWT_CLAIM_ROL, role),
+                new Claim(Core.JWT_CLAIM_VERIFIED, user.PhoneNumberConfirmed.ToString())
             });
 
             /*
@@ -64,10 +72,11 @@ namespace Nysc.API.Data
             return encodedJwt;
             */
 
-            return Task.FromResult(new JwtSecurityTokenHandler().CreateEncodedJwt(
+
+            return new JwtSecurityTokenHandler().CreateEncodedJwt(
                 JwtOptions.Issuer, JwtOptions.Audience, identity,
                 JwtOptions.NotBefore, JwtOptions.Expiration, JwtOptions.IssuedAt,
-                JwtOptions.SigningCredentials));
+                JwtOptions.SigningCredentials);
         }
 
 

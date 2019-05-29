@@ -12,6 +12,8 @@ namespace Nysc.API.Data.Interfaces
 
         Task<bool> GenerateOTP(User user);
         Task<string> ValidateOTP(User user, string code);
+        Task<User> GetUser(string username);
+        Task<bool> UserIsInRole(User user, string role);
         #endregion
     }
 }
